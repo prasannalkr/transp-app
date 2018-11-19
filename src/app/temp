@@ -1,0 +1,296 @@
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+   <img alt="" src="https://www.telefonica.com/documents/23283/139117659/TEL_logo_color_neg_thumb.jpg/0a58adef-7706-44b7-b367-9ea2b836cf30">
+</nav>
+<div class="container-fluid m-3">
+    <div class="row">
+        <div class="side col-md-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title text-center network-title">Network</h4>
+                </div>
+                <div class="panel-body">
+                    <mat-tree [dataSource]="nestedDataSource" [treeControl]="nestedTreeControl" class="example-tree">
+                        <mat-nested-tree-node *matTreeNodeDef="let node; when: hasNestedChild">                            
+                            <li>
+                                <div class="mat-tree-node">
+                                    <!--<button mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.filename">
+                                        <mat-icon class="mat-icon-rtl-mirror">
+                                            {{nestedTreeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                                        </mat-icon>
+                                    </button> {{node.filename}}-->
+                                    <div mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.filename">                                        
+                                        {{node.filename}}
+                                    </div>
+                                </div>
+                                <ul [class.example-tree-invisible]="!nestedTreeControl.isExpanded(node)">
+                                    <ng-container matTreeNodeOutlet></ng-container>
+                                </ul>
+                            </li>
+                        </mat-nested-tree-node>
+                    </mat-tree>
+                </div>
+            </div>
+        </div>
+        <!-- RIGHT PANEL START -->
+        <div class="main col-md-8">
+            <!-- FIRST BOX START -->
+            <!-- FIRST BOX END -->
+            <!-- SECOND BOX START -->
+            <div class="col-md-12 my-3 py-2 threed">
+                <h5 class="panel-title">Laser State</h5>
+                <div class="row">
+                    <div class="col-md-6 text-left">
+                        <div class="rounded border border-custom p-2">
+                            <label>Laser On / Off</label>
+                            <div class="row px-3">
+                                <div class="col-md-6 px-0 text-left">
+                                    <input type="text" class="form-control" value="{{telefonicaData.laserState.status}}">
+                                </div>
+                                <div class="col-md-2 px-1 text-left">
+                                 <div class="mt-2" [ngClass]="[telefonicaData.laserState.status === 'ON' ? 'ON' : 'OFF']"></div>
+                                </div>
+                                <div class="col-md-2 px-1 text-left">
+                                <button class="btn btn-primary btn-sm p-2" data-toggle="modal" data-target="#myModal">Change</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center"></div>
+                </div>
+            </div>
+            <!-- SECOND BOX END -->
+            <!-- THIRD BOX START -->
+            <div class="col-md-12 my-3 py-2 threed">
+                <div class="row">
+                    <div class="col-md-5 pl-4 pr-0">
+                        <h5 class="panel-title">Optical Power</h5>
+                        <div class="row">
+                            <div class="col-md-2  px-1"></div>
+                            <div class="col-md-4 px-1">Power</div>
+                            <div class="col-md-6 px-1">Threshold</div>
+                               </div>
+                        <div class="row py-1">
+                            <div class="col-md-2 px-1"></div>
+                            <div class="col-md-4 px-1"></div>
+                            <div class="col-md-3 px-1">min</div>
+                            <div class="col-md-3 px-1">max</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2 px-1">RX</div>
+                            <div class="col-md-4 px-1">
+                                <input type="text" class="form-control"  [(ngModel)]="opticalPowerData.rx.value">
+                            </div>
+                            <div class="col-md-3 px-1">
+                                <input type="text" class="form-control"  [(ngModel)]="opticalPowerData.rx.min">
+                            </div>
+                            <div class="col-md-3 px-1">
+                                <input type="text" class="form-control"  [(ngModel)]="opticalPowerData.rx.max">
+                            </div>
+                        </div>
+                        <div class="row py-1">
+                            <div class="col-md-2 px-1">TX</div>
+                            <div class="col-md-3 px-1">
+                                <input type="text" class="form-control" [(ngModel)]="opticalPowerData.tx.value">
+                            </div>
+                            <div class="col-md-4 px-1">
+                            </div>
+                            <div class="col-md-3 px-1">
+                                <div class="mt-2" [ngClass]="[opticalPowerData.tx.alarm === '0' ? 'ON' : 'OFF']"></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2"></div>
+                            <div class="col-md-6 px-1">
+                                <label>Unit = dBm</label>
+                            </div>
+                        </div>
+                    </div>
+                      
+                    <div class="col-md-7">
+                        <div class="row">
+                            <div class="col-md-6 px-0">
+                                <button class="btn btn-success btn-sm mt-1" (click)="startTimer()">Refresh</button>
+                            </div>
+                            <div class="col-md-6 px-0">
+                                <label>Automatic Refresh : {{counter}}</label>
+                            </div>
+                        </div>
+                        <div class="row mt-2 mr-0 pl-0 pr-1">
+                            <div class="col-md-7 rounded border border-primary p-2 pr-3 mr-1">
+                                <h6 class="panel-title">Laser</h6>
+                                <div class="row">
+                                    <div class="col-md-2">TX</div>
+                                    <div class="col-md-5 pr-2 pl-3 mx-0">
+                                        <div class="rounded border border-custom p-2">
+                                            <div class="row">
+                                                <div class="col-md-7">
+                                                    <label>Bias</label>
+                                                    <input type="text" class="form-control" value="">
+                                                </div>
+                                                <div class="col-md-4 px-0 mt-4">mA</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5 pr-2 pl-0 pr-0 mx-0">
+                                        <div class="rounded border border-custom p-2">
+                                            <div class="row">
+                                                <div class="col-md-7">
+                                                    <label>Temperature</label>
+                                                    <input type="text" class="form-control" value="">
+                                                </div>
+                                                <div class="col-md-4 px-0 mt-4">C</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 rounded border border-primary p-2 pr-3">
+                                <h6 class="panel-title">Treshold Configuration</h6>
+                                <div class="row p-2">
+                                    <div class="col-md-6">
+                                       <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#RXMinModal">RX min</button>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#RXMaxModal">RX max</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- THIRD BOX END -->
+            <!-- FOURTH BOX START -->
+            <div class="col-md-12 mt-0 py-2 threed">
+                <!-- FOURTH->FIRST BOX START -->
+                <div class="row mx-0 mt-2 py-3 rounded shadow-container">
+                    <div class="col-md-3 col-sm-12 text-left font-weight-bold">
+                        <h5 class=" align-middle">Wavelength</h5>
+                    </div>
+                    <div class="col-md-3 col-sm-12 text-center rounded border border-custom p-2">
+                        <label>Lambda</label>
+                        <div class="row px-3">
+                            <div class="col-8 px-0">
+                                <input type="text" class="form-control" value="{{telefonicaData.wavelength.lambda}}">
+                            </div>
+                            <div class="col-3 px-1 pt-1 text-left">nm</div>
+                        </div>
+                    </div>
+                    <div class="col-md-1 text-center"></div>
+                    <div class="col-md-3 col-sm-12 text-center rounded border border-custom p-2">
+                        <label>Frequency</label>
+                        <div class="row px-3">
+                            <div class="col-8 px-0">
+                                <input type="text" class="form-control" value="{{telefonicaData.wavelength.frequency}}">
+                            </div>
+                            <div class="col-3 px-1 pt-1 text-left">GHz</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- FOURTH->FIRST BOX END -->
+
+                <!-- FOURTH->SECOND BOX START -->
+                <div class="row mx-0 mt-3 py-3 rounded shadow-container">
+                    <div class="col-md-2 col-sm-12 text-left font-weight-bold">
+                        <h5 class="align-middle">Capacity</h5>
+                    </div>
+                    <div class="col-md-3 mx-1 col-sm-12 text-center rounded border border-custom p-2">
+                        <label>Capacity</label>
+                        <input type="text" class="form-control" value="{{telefonicaData.capacity.value}}">
+                    </div>
+                    <div class="col-md-3 mx-1 col-sm-12 text-center rounded border border-custom p-2">
+                        <label>Capacity Speed</label>
+                        <div class="row text-left px-3">
+                            <div class="col-7 px-0">
+                                <input type="text" class="form-control" value="{{telefonicaData.capacity.speed}}">
+                            </div>
+                            <div class="col-4 px-1 pt-1 text-left">MBit/s</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mx-1 col-sm-12 text-center rounded border border-custom p-2">
+                        <label>Capacity Size</label>
+                        <div class="row px-3">
+                            <div class="col-7 px-0">
+                                <input type="text" class="form-control" value="{{telefonicaData.capacity.size}}">
+                            </div>
+                            <div class="col-4 px-1 pt-1 text-left">GBit/s</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- FOURTH->SECOND BOX END -->
+                <!-- FOURTH->THIRD BOX START -->
+                <div class="row mx-0 mt-3 mb-1 py-3 rounded shadow-container">
+                    <div class="col-12">
+                    <div class="row">
+                        <div class="col-md-2 col-sm-12 text-left font-weight-bold mr-3">
+                            <h5 class="align-middle">Performance</h5>
+                            <button class="btn btn-success btn-sm" (click)="startTimerPerformance()">Refresh</button>
+                        </div>
+                        <div class="col-md-3 col-sm-12 text-center rounded border border-custom p-2">
+                            <label>BER before FEC</label>
+                            <input type="text" class="form-control" [(ngModel)]="performanceData.BERBeforFEC">
+                        </div>
+                        <div class="col-md-3 mx-2 col-sm-12 text-center rounded border border-custom p-2">
+                            <label>BER after FEC</label>
+                            <input type="text" class="form-control" [(ngModel)]="performanceData.BERAfterFEC">
+                        </div>
+                        <div class="col-md-3 col-sm-12 text-center rounded border border-custom p-2">
+                            <label>FEC_Corrected_Errors</label>
+                            <input type="text" class="form-control" [(ngModel)]="performanceData.FECCorrected">
+                        </div>
+                    </div>
+                    </div>
+                    <div class="col-12">
+                    <div class="row mt-3">
+                        <div class="col-md-4 col-sm-12">
+                            <label>Automatic Refresh : {{performanceCounter}}</label>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <!-- FOURTH->THIRD BOX END -->
+            </div>
+            <!-- FOURTH BOX END -->
+        </div>
+    </div>
+</div>
+<div class="footer text-white">
+    © Designed, Developed and Hosted by
+     <strong id="tech">Tech</strong>
+     <strong id="mahindra"> Mahindra Limited</strong>
+     <br />Last Updated: 14 September, 2018
+</div>
+
+
+
+  <!-- The Modal -->
+  <div class="modal" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Modal body -->
+        <div class="modal-body">
+          <div class="rounded border border-custom p-2">
+            <label>Laser Configuration</label>
+            <div class="row px-3">
+                <div class="col-md-12 text-left px-0">
+                    <select class="form-control" [(ngModel)]="telefonicaData.laserState.status">
+                        <option>ON</option>
+                        <option>OFF</option>
+                        <option>Automatic Laser Shutdown</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row p-3">
+                <div class="col-md-3 px-1 text-left">
+                    <button class="btn btn-primary btn-sm p-2">Save</button>
+                </div>
+                <div class="col-md-6 px-1 text-left"></div>
+                <div class="col-md-3 px-1 text-right">
+                    <button class="btn btn-default btn-sm p-2">Cancel</button>
+                </div>
+            </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>

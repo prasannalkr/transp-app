@@ -1,0 +1,39 @@
+{
+	"inventory": {
+		"moduleType": "SFP 1G ETH xxx xxx",
+		"orderCode": "14fh gs fdg f1",
+		"serialNumber": "1ewe gfd gfg1",
+		"cli": "11 f dffd dff"
+	},
+	"laserState": {
+		"status": "ON"
+	},
+	"opticalPower": {
+		"rx": {
+			"value": "12",
+			"min": "13",
+			"max": "14",
+			"alarm": "1"
+		},
+		"tx": {
+			"value": "12",
+			"min": "15",
+			"max": "16",
+			"alarm": "0"
+		}
+	},
+	"wavelength": {
+		"lambda": "55g",
+		"frequency": "4324"
+	},
+	"capacity": {
+		"value": "3242",
+		"speed": "2343",
+		"size": "324"
+	},
+	"performance": {
+		"BERBeforFEC": "32424",
+		"BERAfterFEC": "24324",
+		"FECCorrected": "324324"
+	}
+}
