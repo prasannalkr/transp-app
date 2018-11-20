@@ -1,5 +1,5 @@
 .fullHeight{
-    min-height:520px;    
+    min-height:550px;    
 }
 
 
@@ -121,7 +121,16 @@
     background-color: #fff;
 }
 
+.activeLeaf{
+    color: #FFF;
+    background: #e51937;
+    padding: 0px 5px;
+}
 
+.breadcrumb{
+    background: #c8ccd0;
+    color: #e51937;
+}
 
 
 /* Create two unequal columns that sits next to each other */

@@ -21,6 +21,10 @@ export class FileNode {
     type: any;
 }
 
+//import { Observable } from 'rxjs/Observable';
+import { forkJoin } from 'rxjs';
+
+
 @Component({
     selector: "app-root",
     templateUrl: "./app.component.html",
@@ -69,6 +73,7 @@ export class AppComponent implements AfterViewInit {
     public interfaceConfiguration: boolean;
     public interfaceCapability: boolean;
     public notFoundRHSData: boolean;
+  //  public responseError: any;
 
     constructor(private dataService: DataService) {
         this.showRight = false;
@@ -89,10 +94,14 @@ export class AppComponent implements AfterViewInit {
         // this.fetchData('');
         setTimeout(() => {
             this.showFullProgress = false;
-        }, 40000);
+            this.startTimer("firstCall");
+            this.intervalValue = 5;
+            this.counter = 0;
+        }, 30000);
         this.showPage = true;
         this.autoRefreshEnable = false;
         this.notFoundRHSData = false;
+      //  this.responseError = dataService.error;
     }
 
     validateRXminValue() {
@@ -135,21 +144,25 @@ export class AppComponent implements AfterViewInit {
         this.showProgress = true;
         this.showRight = false;
         this.notFoundRHSData = false;
+        this.interfaceConfiguration = false;
+        this.interfaceCapability = false;
         this.leafNode = leafNode;
         this.nodeId = nodeId;
+        this.intervalValue = 5;
+        this.count = 5;
+        this.counter = 0;
+        
         this.fetchData('all');
+
         setTimeout(() => {
-            if(this.showRight == false) {
+            if (this.showRight == false) {
                 this.showProgress = false;
                 this.notFoundRHSData = true;
             }
-        }, 8000);
+        }, 4000);
     }
 
     ngAfterViewInit() {
-        if(this.showRight == false) {
-          //  this.startTimer();
-        }
     }
 
     private _getChildren = (node: FileNode) => {
@@ -162,7 +175,7 @@ export class AppComponent implements AfterViewInit {
 
     onChangeRefreshInt(intervalValue) {
         this.intervalValue = intervalValue;
-       // this.startTimer();
+        this.startTimer();
     }
 
     private autoRefresh(e) {
@@ -175,10 +188,12 @@ export class AppComponent implements AfterViewInit {
         }
     }
 
-    private startTimer() {
+    private startTimer(callfrom?:any) {
         clearInterval(this.opticalTimer);
         this.count = this.intervalValue;
-        this.fetchData('optical');
+        if(callfrom != "firstCall"){
+            this.fetchData('optical');
+        }
         this.opticalTimer = setInterval(() => {
             this.counter = --this.count;
             if (this.counter == 0) {
@@ -210,6 +225,7 @@ export class AppComponent implements AfterViewInit {
 
 
     private checkExistenceOfLeaf(type) {
+        
         this.dataService.checkExistenceOfLeaf(this.nodeId).subscribe(
             data => {
                 var ltp = data["network-element"]["ltp"];
@@ -217,103 +233,71 @@ export class AppComponent implements AfterViewInit {
                     if (ltp[n].hasOwnProperty('physical-port-reference')) {
                         if (ltp[n]["physical-port-reference"][0] == this.leafNode) {
                             this.uuid = ltp[n]["lp"][0]["uuid"];
-                            this.dataService.getOtsiInterfaceStatus(this.nodeId, this.uuid)
-                                .subscribe(
-                                    data => {
-                                        this.otsiInterfaceStatus = data;
-                                        if (this.otsiInterfaceStatus.hasOwnProperty("otsi-interface-status")) {
-                                            if (this.otsiInterfaceStatus["otsi-interface-status"].hasOwnProperty("laser-properties")) {
-                                                if (this.otsiInterfaceStatus["otsi-interface-status"]["laser-properties"].hasOwnProperty("laser-status")) {
-                                                    this.interfaceStatus = true;
-                                                }
-                                            }
+
+                            let otsiInterfaceStatus = this.dataService.getOtsiInterfaceStatus(this.nodeId, this.uuid);
+                            let otsiInterfaceConfiguration = this.dataService.getOtsiInterfaceConfiguration(this.nodeId, this.uuid);
+                            let otsiInterfaceCapability = this.dataService.getOtsiInterfaceCapability(this.nodeId, this.uuid);
+
+                            forkJoin([otsiInterfaceStatus, otsiInterfaceConfiguration, otsiInterfaceCapability]).subscribe(results => {
+                                var statusResults = results[0];
+                                var configurationResults = results[1];
+                                var capabilityResults = results[2];
+
+                                if (statusResults.hasOwnProperty("otsi-interface-status")) {
+                                    if (statusResults["otsi-interface-status"].hasOwnProperty("laser-properties")) {
+                                        if (statusResults["otsi-interface-status"]["laser-properties"].hasOwnProperty("laser-status")) {
+                                            this.interfaceStatus = true;
                                         }
                                     }
-                                );
+                                }
 
-                            this.dataService.getOtsiInterfaceConfiguration(this.nodeId, this.uuid)
-                                .subscribe(
-                                    data => {
-                                        this.otsiInterfaceConfiguration = data;
-                                        if(this.otsiInterfaceConfiguration.hasOwnProperty("otsi-interface-configuration")){
-                                            if(this.otsiInterfaceConfiguration["otsi-interface-configuration"].hasOwnProperty("laser-control")){
-                                                this.interfaceConfiguration = true;
-                                            }
+                                if(configurationResults.hasOwnProperty("otsi-interface-configuration")){
+                                    if(configurationResults["otsi-interface-configuration"].hasOwnProperty("laser-control")){
+                                        this.interfaceConfiguration = true;
+                                    }
+                                }
+
+                                if(capabilityResults.hasOwnProperty("otsi-interface-capability")){
+                                    if(capabilityResults["otsi-interface-capability"].hasOwnProperty("total-power-warn-threshold")){
+                                        if(capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"].hasOwnProperty("total-power-lower-warn-threshold-min")){
+                                            this.interfaceCapability = true;
                                         }
                                     }
-                                );
+                                }
 
-                            this.dataService.getOtsiInterfaceCapability(this.nodeId, this.uuid)
-                                .subscribe(
-                                    data => {
-                                        this.otsiInterfaceCapability = data;
-                                        if(this.otsiInterfaceCapability.hasOwnProperty("otsi-interface-capability")){
-                                            if(this.otsiInterfaceCapability["otsi-interface-capability"].hasOwnProperty("total-power-warn-threshold")){
-                                                if(this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"].hasOwnProperty("total-power-lower-warn-threshold-min")){
-                                                    this.interfaceCapability = true;
-                                                }
-                                            }
-                                        }
-                                    }
-                                );
-                            
-                            if (this.interfaceStatus) {
-                                var laserStatus = this.otsiInterfaceStatus["otsi-interface-status"]["laser-properties"]["laser-status"];
-                                var laserControlConfiguration = this.otsiInterfaceConfiguration["otsi-interface-configuration"]["laser-control"];
+                                if (this.interfaceStatus && this.interfaceConfiguration && this.interfaceCapability) {
+                                    var laserStatus = statusResults["otsi-interface-status"]["laser-properties"]["laser-status"];
+                                    var laserControlConfiguration = configurationResults["otsi-interface-configuration"]["laser-control"];
 
-                                var RXTotalPower = this.otsiInterfaceStatus["otsi-interface-status"]["received-power"]["total-power"];
-                                var ThresholdUpper = this.otsiInterfaceConfiguration["otsi-interface-configuration"]["total-power-warn-threshold-upper"];
-                                var ThresholdLower = this.otsiInterfaceConfiguration["otsi-interface-configuration"]["total-power-warn-threshold-lower"];
-                                var TXTotalPower = this.otsiInterfaceStatus["otsi-interface-status"]["transmited-power"]["total-power"];
-                                var laserTemperature = this.otsiInterfaceStatus["otsi-interface-status"]["laser-properties"]["laser-temperature"];
-                                var laserBiasCurrent = this.otsiInterfaceStatus["otsi-interface-status"]["laser-properties"]["laser-bias-current"];
+                                    var RXTotalPower = statusResults["otsi-interface-status"]["received-power"]["total-power"];
+                                    var ThresholdUpper = configurationResults["otsi-interface-configuration"]["total-power-warn-threshold-upper"];
+                                    var ThresholdLower = configurationResults["otsi-interface-configuration"]["total-power-warn-threshold-lower"];
+                                    var TXTotalPower = statusResults["otsi-interface-status"]["transmited-power"]["total-power"];
+                                    var laserTemperature = statusResults["otsi-interface-status"]["laser-properties"]["laser-temperature"];
+                                    var laserBiasCurrent = statusResults["otsi-interface-status"]["laser-properties"]["laser-bias-current"];
 
-                                var totalPowerLowerWarnThresholdMin = this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-lower-warn-threshold-min"];
-                                var totalPowerLowerWarnThresholdMax = this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-lower-warn-threshold-max"];
-                                var totalPowerWarnThresholdLower = this.otsiInterfaceConfiguration["otsi-interface-configuration"]["total-power-warn-threshold-lower"];
-                                var totalPowerLowerWarnThresholdDefault = this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-lower-warn-threshold-default"];
+                                    var totalPowerLowerWarnThresholdMin = capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-lower-warn-threshold-min"];
+                                    var totalPowerLowerWarnThresholdMax = capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-lower-warn-threshold-max"];
+                                    var totalPowerWarnThresholdLower = configurationResults["otsi-interface-configuration"]["total-power-warn-threshold-lower"];
+                                    var totalPowerLowerWarnThresholdDefault = capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-lower-warn-threshold-default"];
 
-                                var totalPowerUpperWarnThresholdMin = this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-upper-warn-threshold-min"];
-                                var totalPowerUpperWarnThresholdMax = this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-upper-warn-threshold-max"];
-                                var totalPowerWarnThresholdUpper = this.otsiInterfaceConfiguration["otsi-interface-configuration"]["total-power-warn-threshold-upper"];
-                                var totalPowerUpperWarnThresholdDefault = this.otsiInterfaceCapability["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-upper-warn-threshold-default"];
+                                    var totalPowerUpperWarnThresholdMin = capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-upper-warn-threshold-min"];
+                                    var totalPowerUpperWarnThresholdMax = capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-upper-warn-threshold-max"];
+                                    var totalPowerWarnThresholdUpper = configurationResults["otsi-interface-configuration"]["total-power-warn-threshold-upper"];
+                                    var totalPowerUpperWarnThresholdDefault = capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"]["total-power-upper-warn-threshold-default"];
 
-                                var centralFrequency = this.otsiInterfaceStatus["otsi-interface-status"]["selected-central-frequency"]["central-frequency"];
-                                var channelNumber = this.otsiInterfaceStatus["otsi-interface-status"]["selected-central-frequency"]["channel-number"];
+                                    var centralFrequency = statusResults["otsi-interface-status"]["selected-central-frequency"]["central-frequency"];
+                                    var channelNumber = statusResults["otsi-interface-status"]["selected-central-frequency"]["channel-number"];
 
-                                if (type == 'performance') {
-                                    this.performanceData = {
-                                        "CorrectedBits": "12",
-                                        "CorrectedBytes": "13",
-                                        "uncorrectableBits": "14",
-                                        "uncorrectableBytes": "15"
-                                    };
-                                } else if (type == 'optical') {
-                                    this.opticalPower = {
-                                        "rx": {
-                                            "RxTotalPower": RXTotalPower,
-                                            "RXMinAllowedMin": totalPowerLowerWarnThresholdMin,
-                                            "RXMinAllowedMax": totalPowerLowerWarnThresholdMax,
-                                            "totalPowerWarnThresholdLower": totalPowerWarnThresholdLower,
-                                            "totalPowerLowerWarnThresholdDefault": totalPowerLowerWarnThresholdDefault,
-                                            "RXMaxAllowedMin": totalPowerUpperWarnThresholdMin,
-                                            "RXMaxAllowedMax": totalPowerUpperWarnThresholdMax,
-                                            "totalPowerWarnThresholdUpper": totalPowerWarnThresholdUpper,
-                                            "totalPowerUpperWarnThresholdDefault": totalPowerUpperWarnThresholdDefault
-                                        },
-                                        "tx": {
-                                            "TXTotalPower": TXTotalPower,
-                                            "laserTemperature": laserTemperature,
-                                            "laserBiasCurrent": laserBiasCurrent
-                                        }
-                                    }
-                                } else {
-                                    this.rhsServiceData = {
-                                        "laserState": {
-                                            "status": laserStatus,
-                                            "laserControlConfiguration": laserControlConfiguration
-                                        },
-                                        "opticalPower": {
+                                    if (type == 'performance') {
+                                        this.performanceData = {
+                                            "CorrectedBits": "12",
+                                            "CorrectedBytes": "13",
+                                            "uncorrectableBits": "14",
+                                            "uncorrectableBytes": "15"
+                                        };
+                                    } else if (type == 'optical') {
+                                        this.opticalPower = {
                                             "rx": {
                                                 "RxTotalPower": RXTotalPower,
                                                 "RXMinAllowedMin": totalPowerLowerWarnThresholdMin,
@@ -330,47 +314,72 @@ export class AppComponent implements AfterViewInit {
                                                 "laserTemperature": laserTemperature,
                                                 "laserBiasCurrent": laserBiasCurrent
                                             }
-                                        },
-                                        "wavelength": {
-                                            "lambda": (centralFrequency !== 0) ? Math.round(299792458 / (centralFrequency * 1000)) : 0,
-                                            "frequency": centralFrequency,
-                                            "channelNr": channelNumber
-                                        },
-                                        "performance": {
-                                            "CorrectedBits": "12",
-                                            "CorrectedBytes": "13",
-                                            "uncorrectableBits": "14",
-                                            "uncorrectableBytes": "15"
                                         }
+                                    } else {
+                                        this.rhsServiceData = {
+                                            "laserState": {
+                                                "status": laserStatus,
+                                                "laserControlConfiguration": laserControlConfiguration
+                                            },
+                                            "opticalPower": {
+                                                "rx": {
+                                                    "RxTotalPower": RXTotalPower,
+                                                    "RXMinAllowedMin": totalPowerLowerWarnThresholdMin,
+                                                    "RXMinAllowedMax": totalPowerLowerWarnThresholdMax,
+                                                    "totalPowerWarnThresholdLower": totalPowerWarnThresholdLower,
+                                                    "totalPowerLowerWarnThresholdDefault": totalPowerLowerWarnThresholdDefault,
+                                                    "RXMaxAllowedMin": totalPowerUpperWarnThresholdMin,
+                                                    "RXMaxAllowedMax": totalPowerUpperWarnThresholdMax,
+                                                    "totalPowerWarnThresholdUpper": totalPowerWarnThresholdUpper,
+                                                    "totalPowerUpperWarnThresholdDefault": totalPowerUpperWarnThresholdDefault
+                                                },
+                                                "tx": {
+                                                    "TXTotalPower": TXTotalPower,
+                                                    "laserTemperature": laserTemperature,
+                                                    "laserBiasCurrent": laserBiasCurrent
+                                                }
+                                            },
+                                            "wavelength": {
+                                                "lambda": (centralFrequency !== 0) ? Math.round(299792458 / (centralFrequency * 1000)) : 0,
+                                                "frequency": centralFrequency,
+                                                "channelNr": channelNumber
+                                            },
+                                            "performance": {
+                                                "CorrectedBits": "12",
+                                                "CorrectedBytes": "13",
+                                                "uncorrectableBits": "14",
+                                                "uncorrectableBytes": "15"
+                                            }
+                                        }
+                                        this.performanceData = this.rhsServiceData["performance"];
+                                        this.opticalPowerData = this.rhsServiceData["opticalPower"];
+                                        this.showProgress = false;
+                                        this.showRight = true;
                                     }
-                                    this.performanceData = this.rhsServiceData["performance"];
-                                    this.opticalPowerData = this.rhsServiceData["opticalPower"];
-                                    this.showProgress = false;
-                                    this.showRight = true;
                                 }
-                            }
+                            });
                         }
                     }
                 }
-            }
-        );
+            })
     }
 
     private fetchData(type) {
-      //  this.isLeafDataExist = false;
+     //   this.count = 5;
+        this.counter = 0;
         this.checkExistenceOfLeaf(type);
     }
 
-    public saveLaserConfig(laserConfigValue){
-        this.dataService.saveLaserConfig(this.nodeId, this.uuid, laserConfigValue);  
-        
+    public saveLaserConfig(laserConfigValue) {
+        this.dataService.saveLaserConfig(this.nodeId, this.uuid, laserConfigValue);
+
     }
 
-    public saveTotalPowerWarnThresholdLower(totalPowerWarnThresholdLower){
+    public saveTotalPowerWarnThresholdLower(totalPowerWarnThresholdLower) {
         this.dataService.saveTotalPowerWarnThresholdLower(this.nodeId, this.uuid, totalPowerWarnThresholdLower);
     }
-    
-    public saveTotalPowerWarnThresholdUpper(totalPowerWarnThresholdUpper){
+
+    public saveTotalPowerWarnThresholdUpper(totalPowerWarnThresholdUpper) {
         this.dataService.saveTotalPowerWarnThresholdUpper(this.nodeId, this.uuid, totalPowerWarnThresholdUpper);
     }
 }

@@ -13,7 +13,7 @@
         <ol class="breadcrumb">
           <li class="breadcrumb-item">{{nodeId}}</li>
           <li class="breadcrumb-item">{{leafNode}}</li>
-          <li class="breadcrumb-item">{{uuid}}</li>
+          <!-- <li class="breadcrumb-item">{{uuid}}</li> -->
         </ol>
       </nav>
 
@@ -45,7 +45,6 @@
       </div>
       <!-- RIGHT PANEL START -->
       <div class="main col-md-8" [ngClass]="[showProgress === true ? 'loadWrapper' : '']">
-          <!-- this.otsiInterfaceConfiguration ==>> {{otsiInterfaceConfiguration | json}} -->
         <img class="showProgress  mx-auto mx-auto d-block" *ngIf="showProgress" src="../assets/images/loading.gif" />
         <div class="" *ngIf="showRight">
           <!-- SECOND BOX START -->
@@ -124,8 +123,7 @@
               <div class="col-md-8">
                 <div class="row mt-3">
                   <div class="col-md-4 px-0">
-                    <!-- <button class="btn btn-success btn-sm mt-1" (click)="startTimer('manualRefresh')">Refresh</button> -->
-                    <label class="autoRefreshEnable mt-1 ml-2">Automatic Refresh : {{counter}} secs</label>
+                  <label class="autoRefreshEnable mt-1 ml-2">Automatic Refresh : {{counter}} secs</label>
                   </div>
                   <div class="col-md-5 px-0 text-right mr-1">
                     <label class="mt-1">Change refresh interval (seconds): </label>
@@ -253,7 +251,7 @@
           </div>
           <!-- FOURTH BOX END -->
         </div>
-        <h4 class="text-center mt-4" *ngIf="notFoundRHSData">There is no data found for this Node.</h4>
+        <h4 class="text-center mt-4" *ngIf="notFoundRHSData">No data found for this Node.</h4>
       </div>
     </div>
     <div class="footer">

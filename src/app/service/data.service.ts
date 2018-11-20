@@ -20,6 +20,7 @@ export class DataService {
 
     treeData: any = [];
     dataaa: any = [];
+   // error: any;
     public httpOptions = {
         headers: new HttpHeaders({
             'Content-Type': 'application/json',
@@ -76,9 +77,13 @@ export class DataService {
                         }
                     }
                 },
-                error => { }
-            );
-        //  console.log(" this.treeData == > ", this.treeData);
+                (error:any )=> { 
+                    if(error["status"] == 0 ){
+                       
+                        return false;
+                    }
+                }
+            )
         return this.treeData;
     }
 
@@ -215,7 +220,6 @@ export class DataService {
         .subscribe(
             data => {
                 data["otsi-interface-status"]["laser-properties"]["laser-status"] = laserConfigValue;
-                console.log("Data => ", data);
                  this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-status`,
                      data,
                      this.httpOptions
@@ -235,8 +239,7 @@ export class DataService {
         .subscribe(
             data => {
                 data["otsi-interface-configuration"]["total-power-warn-threshold-lower"] = totalPowerWarnThresholdLower;
-                console.log("Data => ", data);
-                 this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
+                  this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
                      data,
                      this.httpOptions
                  ).subscribe(
@@ -255,7 +258,6 @@ export class DataService {
         .subscribe(
             data => {
                 data["otsi-interface-configuration"]["total-power-warn-threshold-upper"] = totalPowerWarnThresholdUpper;
-                console.log("Data => ", data);
                  this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
                      data,
                      this.httpOptions
