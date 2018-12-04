@@ -14,14 +14,11 @@ import {
 import {
     DataService
 } from "./service/data.service";
-
 export class FileNode {
     children: FileNode[];
     filename: string;
     type: any;
 }
-
-//import { Observable } from 'rxjs/Observable';
 import { forkJoin } from 'rxjs';
 
 
@@ -32,7 +29,6 @@ import { forkJoin } from 'rxjs';
     providers: [DataService]
 })
 export class AppComponent implements AfterViewInit {
-    title = 'telefonicas';
     public telefonicaData: any;
     public counter: number;
     public count: number;
@@ -45,6 +41,7 @@ export class AppComponent implements AfterViewInit {
     public nestedDataSource1: MatTreeNestedDataSource<any>;
     public dataChange: BehaviorSubject<FileNode[]> = new BehaviorSubject<FileNode[]>([]);
     public opticalPowerData: any;
+    public opticalPowerEditables: any;
     public performanceData: any;
     public opticalPower: any;
     public treeData: any;
@@ -65,7 +62,6 @@ export class AppComponent implements AfterViewInit {
     public leafNode: string;
     public nodeId: string;
     public uuid: any;
-    //public isLeafDataExist: any;
     public otsiInterfaceStatus: object;
     public otsiInterfaceConfiguration: object;
     public otsiInterfaceCapability: object;
@@ -73,7 +69,9 @@ export class AppComponent implements AfterViewInit {
     public interfaceConfiguration: boolean;
     public interfaceCapability: boolean;
     public notFoundRHSData: boolean;
-  //  public responseError: any;
+    public shelfName: any = '';
+    public modName: any = '';
+    public leafId: any = '';
 
     constructor(private dataService: DataService) {
         this.showRight = false;
@@ -83,31 +81,27 @@ export class AppComponent implements AfterViewInit {
         this.showPage = true;
         this.treeData = dataService.getTreeData();
         this.dataChange.next(this.treeData);
-        //this.dataChange.next(dataService.getDummyTree());
-        this.refreshIntervals = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+        this.refreshIntervals = [60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5];
         this.intervalValue = 5;
         this.minutes = 0;
         this.seconds = 0;
         this.RXminInvalid = false;
         this.RXmaxInvalid = false;
         this.showFullProgress = true;
-        // this.fetchData('');
         setTimeout(() => {
             this.showFullProgress = false;
-            this.startTimer("firstCall");
             this.intervalValue = 5;
             this.counter = 0;
-        }, 30000);
+        }, 55000);
         this.showPage = true;
         this.autoRefreshEnable = false;
         this.notFoundRHSData = false;
-      //  this.responseError = dataService.error;
     }
 
     validateRXminValue() {
         var RXmin = this.opticalPowerData.rx.RXMinAllowedMin;
         var RXmax = this.opticalPowerData.rx.RXMinAllowedMax;
-        var RXnewVal = this.opticalPowerData.rx.totalPowerWarnThresholdLower;
+        var RXnewVal = this.opticalPowerEditables.opticalPowerRxLower;
         this.RXminInvalid = true;
         let RXnewVal1 = parseFloat(RXnewVal.replace(",", "."));
 
@@ -117,7 +111,7 @@ export class AppComponent implements AfterViewInit {
     }
 
     setDefaultRXmin() {
-        this.opticalPowerData.rx.totalPowerWarnThresholdLower = this.opticalPowerData.rx.totalPowerLowerWarnThresholdDefault.toString();
+        this.opticalPowerEditables.opticalPowerRxLower = this.opticalPowerData.rx.totalPowerLowerWarnThresholdDefault.toString();
         this.validateRXminValue();
     }
 
@@ -125,7 +119,7 @@ export class AppComponent implements AfterViewInit {
     validateRXmaxValue() {
         var RXminLower = this.opticalPowerData.rx.RXMaxAllowedMin;
         var RXmaxUpper = this.opticalPowerData.rx.RXMaxAllowedMax;
-        var RXnewValMax = this.opticalPowerData.rx.totalPowerWarnThresholdUpper;
+        var RXnewValMax = this.opticalPowerEditables.opticalPowerRxUpper;
         this.RXmaxInvalid = true;
         let RXnewValMax1 = parseFloat(RXnewValMax.replace(",", "."));
         if ((parseFloat(RXminLower) <= RXnewValMax1) && (RXnewValMax1 <= parseFloat(RXmaxUpper))) {
@@ -135,12 +129,20 @@ export class AppComponent implements AfterViewInit {
 
 
     setDefaultRXmax() {
-        this.opticalPowerData.rx.totalPowerWarnThresholdUpper = this.opticalPowerData.rx.totalPowerUpperWarnThresholdDefault.toString();
+        this.opticalPowerEditables.opticalPowerRxUpper = this.opticalPowerData.rx.totalPowerUpperWarnThresholdDefault.toString();
         this.validateRXmaxValue();
     }
 
 
-    showRightPanel(leafNode, nodeId) {
+    showRightPanel(leafNode, shelfName, modName, nodeId, $event) {
+        if (this.leafId !== '') {
+            var activeLeafId = document.getElementById(this.leafId);
+            activeLeafId.classList.remove("leafActive");
+        }
+        this.leafId = $event.srcElement.id;
+        $event.srcElement.classList.add("leafActive");
+
+
         this.showProgress = true;
         this.showRight = false;
         this.notFoundRHSData = false;
@@ -148,10 +150,19 @@ export class AppComponent implements AfterViewInit {
         this.interfaceCapability = false;
         this.leafNode = leafNode;
         this.nodeId = nodeId;
-        this.intervalValue = 5;
-        this.count = 5;
+        this.shelfName = shelfName;
+        this.modName = modName;
+        this.uuid = '';
+        this.intervalValue = 60;
+        this.count = 60;
         this.counter = 0;
-        
+        this.autoRefreshEnable = false;
+        this.performanceCount = 0;
+        this.minutes = 0;
+        this.seconds = 0;
+
+        clearInterval(this.performanceTimer);
+
         this.fetchData('all');
 
         setTimeout(() => {
@@ -159,7 +170,7 @@ export class AppComponent implements AfterViewInit {
                 this.showProgress = false;
                 this.notFoundRHSData = true;
             }
-        }, 4000);
+        }, 10000);
     }
 
     ngAfterViewInit() {
@@ -188,19 +199,16 @@ export class AppComponent implements AfterViewInit {
         }
     }
 
-    private startTimer(callfrom?:any) {
+    private startTimer(callfrom?: any) {
         clearInterval(this.opticalTimer);
         this.count = this.intervalValue;
-        if(callfrom != "firstCall"){
-            this.fetchData('optical');
-        }
         this.opticalTimer = setInterval(() => {
             this.counter = --this.count;
             if (this.counter == 0) {
                 this.fetchData('optical');
                 this.count = this.intervalValue;
             }
-        }, 1000)
+        }, 2000)
     }
 
 
@@ -225,7 +233,7 @@ export class AppComponent implements AfterViewInit {
 
 
     private checkExistenceOfLeaf(type) {
-        
+
         this.dataService.checkExistenceOfLeaf(this.nodeId).subscribe(
             data => {
                 var ltp = data["network-element"]["ltp"];
@@ -251,15 +259,15 @@ export class AppComponent implements AfterViewInit {
                                     }
                                 }
 
-                                if(configurationResults.hasOwnProperty("otsi-interface-configuration")){
-                                    if(configurationResults["otsi-interface-configuration"].hasOwnProperty("laser-control")){
+                                if (configurationResults.hasOwnProperty("otsi-interface-configuration")) {
+                                    if (configurationResults["otsi-interface-configuration"].hasOwnProperty("laser-control")) {
                                         this.interfaceConfiguration = true;
                                     }
                                 }
 
-                                if(capabilityResults.hasOwnProperty("otsi-interface-capability")){
-                                    if(capabilityResults["otsi-interface-capability"].hasOwnProperty("total-power-warn-threshold")){
-                                        if(capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"].hasOwnProperty("total-power-lower-warn-threshold-min")){
+                                if (capabilityResults.hasOwnProperty("otsi-interface-capability")) {
+                                    if (capabilityResults["otsi-interface-capability"].hasOwnProperty("total-power-warn-threshold")) {
+                                        if (capabilityResults["otsi-interface-capability"]["total-power-warn-threshold"].hasOwnProperty("total-power-lower-warn-threshold-min")) {
                                             this.interfaceCapability = true;
                                         }
                                     }
@@ -270,8 +278,6 @@ export class AppComponent implements AfterViewInit {
                                     var laserControlConfiguration = configurationResults["otsi-interface-configuration"]["laser-control"];
 
                                     var RXTotalPower = statusResults["otsi-interface-status"]["received-power"]["total-power"];
-                                    var ThresholdUpper = configurationResults["otsi-interface-configuration"]["total-power-warn-threshold-upper"];
-                                    var ThresholdLower = configurationResults["otsi-interface-configuration"]["total-power-warn-threshold-lower"];
                                     var TXTotalPower = statusResults["otsi-interface-status"]["transmited-power"]["total-power"];
                                     var laserTemperature = statusResults["otsi-interface-status"]["laser-properties"]["laser-temperature"];
                                     var laserBiasCurrent = statusResults["otsi-interface-status"]["laser-properties"]["laser-bias-current"];
@@ -289,15 +295,8 @@ export class AppComponent implements AfterViewInit {
                                     var centralFrequency = statusResults["otsi-interface-status"]["selected-central-frequency"]["central-frequency"];
                                     var channelNumber = statusResults["otsi-interface-status"]["selected-central-frequency"]["channel-number"];
 
-                                    if (type == 'performance') {
-                                        this.performanceData = {
-                                            "CorrectedBits": "12",
-                                            "CorrectedBytes": "13",
-                                            "uncorrectableBits": "14",
-                                            "uncorrectableBytes": "15"
-                                        };
-                                    } else if (type == 'optical') {
-                                        this.opticalPower = {
+                                    if (type == 'optical') {
+                                        this.opticalPowerData = {
                                             "rx": {
                                                 "RxTotalPower": RXTotalPower,
                                                 "RXMinAllowedMin": totalPowerLowerWarnThresholdMin,
@@ -339,22 +338,23 @@ export class AppComponent implements AfterViewInit {
                                                     "laserBiasCurrent": laserBiasCurrent
                                                 }
                                             },
+                                            "opticalPowerEditables": {
+                                                "opticalPowerRxLower": totalPowerWarnThresholdLower,
+                                                "opticalPowerRxUpper": totalPowerWarnThresholdUpper
+                                            },
                                             "wavelength": {
-                                                "lambda": (centralFrequency !== 0) ? Math.round(299792458 / (centralFrequency * 1000)) : 0,
-                                                "frequency": centralFrequency,
+                                                "lambda": (centralFrequency !== 0) ? ((299792458 * 1000) / (centralFrequency)).toFixed(2) : 0,
+                                                "frequency": (centralFrequency !== 0) ? (centralFrequency / 1000000).toFixed(2) : centralFrequency,
                                                 "channelNr": channelNumber
                                             },
-                                            "performance": {
-                                                "CorrectedBits": "12",
-                                                "CorrectedBytes": "13",
-                                                "uncorrectableBits": "14",
-                                                "uncorrectableBytes": "15"
-                                            }
                                         }
-                                        this.performanceData = this.rhsServiceData["performance"];
+
+                                        this.getPerformanceResult();;
                                         this.opticalPowerData = this.rhsServiceData["opticalPower"];
+                                        this.opticalPowerEditables = this.rhsServiceData["opticalPowerEditables"];
                                         this.showProgress = false;
                                         this.showRight = true;
+                                        this.startTimer();
                                     }
                                 }
                             });
@@ -364,15 +364,57 @@ export class AppComponent implements AfterViewInit {
             })
     }
 
+    private updatePerformance() {
+        this.getPerformanceResult();
+    }
+
     private fetchData(type) {
-     //   this.count = 5;
-        this.counter = 0;
-        this.checkExistenceOfLeaf(type);
+
+        if (type == 'performance') {
+            this.updatePerformance();
+        } else {
+            this.checkExistenceOfLeaf(type);
+        }
+    }
+
+    public getPerformanceResult() {
+        this.performanceData = {
+            "correctedBits": '',
+            "uncorrectedBits": '',
+            "correctedBytes": '',
+            "uncorrectedBytes": '',
+        };
+
+        this.dataService.getOtsiInterfacePerformance(this.nodeId, this.uuid)
+            .subscribe(
+                (data: any) => {
+                    if (data.hasOwnProperty("otsi-interface-current-performance")) {
+                        if (data["otsi-interface-current-performance"].hasOwnProperty("current-performance-data-list") &&
+                            data["otsi-interface-current-performance"]["current-performance-data-list"].length > 0) {
+                            if (data["otsi-interface-current-performance"]["current-performance-data-list"]["0"].hasOwnProperty("performance-data")) {
+                                if (data["otsi-interface-current-performance"]["current-performance-data-list"]["0"]["performance-data"].hasOwnProperty("fec-properties-pac")) {
+                                    return this.performanceData = {
+                                        "correctedBits": data["otsi-interface-current-performance"]["current-performance-data-list"]["0"]["performance-data"]["fec-properties-pac"]["corrected-bits"],
+                                        "uncorrectedBits": data["otsi-interface-current-performance"]["current-performance-data-list"]["0"]["performance-data"]["fec-properties-pac"]["uncorrectable-bits"],
+                                        "correctedBytes": data["otsi-interface-current-performance"]["current-performance-data-list"]["0"]["performance-data"]["fec-properties-pac"]["corrected-bytes"],
+                                        "uncorrectedBytes": data["otsi-interface-current-performance"]["current-performance-data-list"]["0"]["performance-data"]["fec-properties-pac"]["uncorrectable-bytes"],
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                error => {
+
+                }
+            );
     }
 
     public saveLaserConfig(laserConfigValue) {
         this.dataService.saveLaserConfig(this.nodeId, this.uuid, laserConfigValue);
-
+        setTimeout(() => {
+            this.checkExistenceOfLeaf('all');
+        }, 16000);
     }
 
     public saveTotalPowerWarnThresholdLower(totalPowerWarnThresholdLower) {

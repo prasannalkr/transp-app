@@ -2,6 +2,12 @@
     min-height:550px;    
 }
 
+.highlight {
+    color: red;
+}
+.removeHighlight {
+    color: blue;
+}
 
 .example-tree-invisible {
     display: none;
@@ -27,7 +33,7 @@
     position: absolute;
     top: 11px;
     left: 20px;
-    width: 240px;
+    width: 110px;
     font-weight: 550;
     color: #212529
 }
@@ -259,13 +265,17 @@ a:active {
 
 }
 
-
 .autoRefreshEnable{
     color: #008000;
     
 }
 
-
 .invalid {
     border-color: #dc3545;
+}
+
+.leafActive{
+    color: #FFF !important;
+    background: #033e50;
+    padding: 1px 8px;
 }

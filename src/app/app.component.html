@@ -10,12 +10,14 @@
       <img alt="" src="../assets/images/TEL-logo_2.jpg" class="logo text-right">
     </nav>
     <nav aria-label="breadcrumb" *ngIf="leafNode">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">{{nodeId}}</li>
-          <li class="breadcrumb-item">{{leafNode}}</li>
-          <!-- <li class="breadcrumb-item">{{uuid}}</li> -->
-        </ol>
-      </nav>
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">{{nodeId}}</li>
+        <li class="breadcrumb-item">{{shelfName}}</li>
+        <li class="breadcrumb-item">{{modName}}</li>
+        <li class="breadcrumb-item">{{leafNode}}</li>
+        <li class="breadcrumb-item">{{uuid}}</li>
+      </ol>
+    </nav>
 
     <div class="row justify-content-center my-3 fullHeight">
       <div class="side col-md-3">
@@ -28,9 +30,9 @@
               <mat-nested-tree-node *matTreeNodeDef="let node; when: hasNestedChild">
                 <li>
                   <div class="mat-tree-node">
-                     <div mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.filename" [ngClass]="[node.type == '3' ? 'text-overflow3' : 'text-overflow2']"
+                    <div mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle ' + node.filename" [ngClass]="[node.type == '3' ? 'text-overflow3' : 'text-overflow2']"
                       matTooltip="{{node.filename}}" matTooltipPosition="above">
-                      <a href="#" disabled *ngIf="node.lastNode; else elseBlock" (click)="showRightPanel(node.filename, node.NENode)">{{node.filename}}</a>
+                      <a href="#" disabled *ngIf="node.lastNode; else elseBlock" id="{{node.leafId}}" (click)="showRightPanel(node.filename, node.shelfName, node.modName, node.NENode, $event)">{{node.filename}}</a>
                       <ng-template #elseBlock>{{node.filename}}</ng-template>
                     </div>
                   </div>
@@ -51,7 +53,7 @@
           <div class="col-md-12 mb-3 py-3 threed">
             <h5 class="panel-title">Laser State</h5>
             <div class="row">
-              <div class="col-md-5 text-left">
+              <div class="col-md-7 text-left">
                 <div class="rounded border border-custom p-2 py-3">
                   <label>Laser On / Off</label>
                   <div class="row px-3">
@@ -123,7 +125,7 @@
               <div class="col-md-8">
                 <div class="row mt-3">
                   <div class="col-md-4 px-0">
-                  <label class="autoRefreshEnable mt-1 ml-2">Automatic Refresh : {{counter}} secs</label>
+                    <label class="autoRefreshEnable mt-1 ml-2">Automatic Refresh : {{counter}} secs</label>
                   </div>
                   <div class="col-md-5 px-0 text-right mr-1">
                     <label class="mt-1">Change refresh interval (seconds): </label>
@@ -166,7 +168,7 @@
                     </div>
                   </div>
                   <div class="col-md-4 rounded border border-custom p-2 ml-3">
-                    <h6 class="panel-title">Treshold Configuration</h6>
+                    <h6 class="panel-title">Threshold Configuration</h6>
                     <div class="row p-2">
                       <div class="col-md-6">
                         <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#RXMinModal">RX min</button>
@@ -234,16 +236,16 @@
               </div>
               <div class="col-3 text-center rounded border border-custom py-2">
                 <label>Corrected after FEC</label>
-                <input type="text" class="form-control form-control-sm" [(ngModel)]="performanceData.CorrectedBits"
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="performanceData.correctedBits"
                   disabled>
-                <input type="text" class="form-control form-control-sm mt-1" [(ngModel)]="performanceData.CorrectedBytes"
+                <input type="text" class="form-control form-control-sm mt-1" [(ngModel)]="performanceData.correctedBytes"
                   disabled>
               </div>
               <div class="col-3 text-center rounded border border-custom py-2 ml-2">
                 <label>Uncorrectable after FEC</label>
-                <input type="text" class="form-control form-control-sm" [(ngModel)]="performanceData.uncorrectableBits"
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="performanceData.uncorrectedBits"
                   disabled>
-                <input type="text" class="form-control form-control-sm mt-1" [(ngModel)]="performanceData.uncorrectableBytes"
+                <input type="text" class="form-control form-control-sm mt-1" [(ngModel)]="performanceData.uncorrectedBytes"
                   disabled>
               </div>
             </div>
@@ -276,9 +278,9 @@
           <div class="row px-3">
             <div class="col-md-12 text-left px-0">
               <select class="form-control form-control-sm" [(ngModel)]="rhsServiceData.laserState.laserControlConfiguration">
-                <!-- <option value="FORCED-ON">ON</option>
-                <option value="FORCED-OFF">OFF</option> -->
-                <option value="PULSING">AUTOMATIC LASER SHUTDOWN</option>
+                <option value="FORCED-ON">FORCED ON</option>
+                <option value="FORCED-OFF">FORCED OFF</option>
+                <option value="AUTOMATIC-LASER-SHUTDOWN">AUTOMATIC LASER SHUTDOWN</option>
               </select>
             </div>
           </div>
@@ -304,7 +306,7 @@
       <!-- Modal body -->
       <div class="row justify-content-center">
         <div class="col-11 border border-custom rounded m-2">
-          <h5 class="text-center mt-2">Threshold Configuration 1</h5>
+          <h5 class="text-center mt-2">Threshold Configuration</h5>
           <div class="row justify-content-center px-3 py-2">
             <div class="col-12 border border-custom m-1 rounded shadow-container">
 
@@ -326,7 +328,7 @@
                 <div class="col-md-3 text-center p-2 mt-3">
                   <label>RX min</label>
                   <input type="text" class="form-control form-control-sm" id="RXMinField" name="RXMinField" required
-                    [(ngModel)]="opticalPowerData.rx.totalPowerWarnThresholdLower" #RXMinField="ngModel" pattern="^[\\-][0-9]{1,2}()*(([\\.,]{1}[0-9]{1})|())$"
+                    [(ngModel)]="opticalPowerEditables.opticalPowerRxLower" #RXMinField="ngModel" pattern="^[\\-][0-9]{1,2}()*(([\\.,]{1}[0-9]{1})|())$"
                     title="Value must be between {{opticalPowerData.rx.RXMinAllowedMin}} and  {{opticalPowerData.rx.RXMinAllowedMax}}"
                     (keyup)="validateRXminValue()" [ngClass]="[(RXMinField.errors?.required || RXminInvalid ) == true ? 'invalid' : '' ]">
                 </div>
@@ -343,7 +345,8 @@
               </div>
               <div class="row py-2">
                 <div class="col-md-3 text-left">
-                  <button class="btn btn-primary btn-sm" data-dismiss="modal" (click)="saveTotalPowerWarnThresholdLower(opticalPowerData.rx.totalPowerWarnThresholdLower)" [disabled]="RXMinField.errors?.required || RXminInvalid">Save</button>
+                  <button class="btn btn-primary btn-sm" data-dismiss="modal" (click)="saveTotalPowerWarnThresholdLower(opticalPowerEditables.opticalPowerRxLower)"
+                    [disabled]="RXMinField.errors?.required || RXminInvalid">Save</button>
                 </div>
                 <div class="col-md-6 text-left mt-3">Unit = dBm</div>
                 <div class="col-md-3 text-right">
@@ -386,7 +389,7 @@
                 <div class="col-md-3 text-center p-2 mt-3">
                   <label>RX max</label>
                   <input type="text" class="form-control form-control-sm" id="RXMaxField" name="RXMaxField" required
-                    [(ngModel)]="opticalPowerData.rx.totalPowerWarnThresholdUpper" #RXMaxField="ngModel" pattern="^[\\-][0-9]{1,2}()*(([\\.,]{1}[0-9]{1})|())$"
+                    [(ngModel)]="opticalPowerEditables.opticalPowerRxUpper" #RXMaxField="ngModel" pattern="^[\\-][0-9]{1,2}()*(([\\.,]{1}[0-9]{1})|())$"
                     title="Value must be between {{opticalPowerData.rx.RXMaxAllowedMin}} and  {{opticalPowerData.rx.RXMaxAllowedMax}}"
                     (keyup)="validateRXmaxValue()" [ngClass]="[(RXMaxField.errors?.required || RXmaxInvalid ) == true ? 'invalid' : '' ]">
                 </div>
@@ -403,7 +406,8 @@
               </div>
               <div class="row py-2">
                 <div class="col-md-3 text-left">
-                  <button class="btn btn-primary btn-sm" data-dismiss="modal" (click)="saveTotalPowerWarnThresholdUpper(opticalPowerData.rx.totalPowerWarnThresholdUpper)" [disabled]="RXMaxField.errors?.required || RXmaxInvalid">Save</button>
+                  <button class="btn btn-primary btn-sm" data-dismiss="modal" (click)="saveTotalPowerWarnThresholdUpper(opticalPowerEditables.opticalPowerRxUpper)"
+                    [disabled]="RXMaxField.errors?.required || RXmaxInvalid">Save</button>
                 </div>
                 <div class="col-md-6 text-left mt-3">Unit = dBm</div>
                 <div class="col-md-3 text-right">

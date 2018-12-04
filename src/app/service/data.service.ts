@@ -3,9 +3,6 @@ import {
 } from "@angular/core"
 import {
     HttpClient,
-    HttpClientModule,
-    HttpResponse,
-    HttpErrorResponse,
     HttpHeaders
 } from "@angular/common/http"
 import {
@@ -15,12 +12,12 @@ import {
     Observable
 } from 'rxjs';
 
+
 @Injectable()
 export class DataService {
 
     treeData: any = [];
-    dataaa: any = [];
-   // error: any;
+
     public httpOptions = {
         headers: new HttpHeaders({
             'Content-Type': 'application/json',
@@ -37,7 +34,6 @@ export class DataService {
             .toPromise()
             .then(
                 (data: any) => {
-                    this.dataaa = data.topology[0];
                     let NEtopology = data.topology[0];
                     let nodeLength = (NEtopology.node).length;
                     let count = 0;
@@ -77,9 +73,9 @@ export class DataService {
                         }
                     }
                 },
-                (error:any )=> { 
-                    if(error["status"] == 0 ){
-                       
+                (error: any) => {
+                    if (error["status"] == 0) {
+
                         return false;
                     }
                 }
@@ -145,7 +141,7 @@ export class DataService {
                                         "filename": modName,
                                         type: "3",
                                     }
-                                    thirdChildren[count3].children = this.getFourthNodes(NENode, modName)
+                                    thirdChildren[count3].children = this.getFourthNodes(NENode, shelfName, modName)
                                     count3++;
                                 };
                             }
@@ -159,7 +155,7 @@ export class DataService {
     }
 
 
-    getFourthNodes(NENode, modName) {
+    getFourthNodes(NENode, shelfName, modName) {
         let fourthChildren = [];
         this.http.get(`http://172.29.145.7:8181/restconf/operational/network-topology:network-topology/topology/topology-netconf/node/${NENode}/yang-ext:mount/core-model:equipment/${modName}`,
             this.httpOptions)
@@ -174,13 +170,16 @@ export class DataService {
                         var count4 = 0;
                         for (let m = 0; m < modLength; m++) {
                             if (containerHolder[m].hasOwnProperty("occupying-fru")) {
-                                let modName = (containerHolder[m]["occupying-fru"]).trim();
-                                if (typeof modName !== 'undefined' && modName !== null && modName !== '') {
+                                let leafName = (containerHolder[m]["occupying-fru"]).trim();
+                                if (typeof leafName !== 'undefined' && leafName !== null && leafName !== '') {
                                     fourthChildren[count4] = {
-                                        "filename": modName,
+                                        "filename": leafName,
+                                        "shelfName": shelfName,
+                                        "modName": modName,
                                         type: "4",
                                         "NENode": NENode,
                                         "lastNode": true,
+                                        "leafId": NENode + shelfName + modName + leafName,
                                         children: []
                                     };
                                     count4++;
@@ -215,60 +214,67 @@ export class DataService {
         return this.http.get(`http://172.29.145.7:8181/restconf/operational/network-topology:network-topology/topology/topology-netconf/node/${nodeId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-capability`, this.httpOptions);
     }
 
-    public saveLaserConfig(NEId, uuid, laserConfigValue) {
-        return this.getOtsiInterfaceStatus(NEId, uuid)
-        .subscribe(
-            data => {
-                data["otsi-interface-status"]["laser-properties"]["laser-status"] = laserConfigValue;
-                 this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-status`,
-                     data,
-                     this.httpOptions
-                 ).subscribe(
-                    data => {
-                        console.log("PUT Request is successful ", data);
-                    },
-                    error => {
-                        console.log("Error", error);
-                    }
-                ); 
-            });
+    public getOtsiInterfacePerformance(nodeId, uuid) {
+        return this.http.get(`http://172.29.145.7:8181/restconf/operational/network-topology:network-topology/topology/topology-netconf/node/${nodeId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-current-performance`, this.httpOptions)
     }
 
-    public saveTotalPowerWarnThresholdLower(NEId, uuid, totalPowerWarnThresholdLower){
+    public saveLaserConfig(NEId, uuid, laserConfigValue) {
         return this.getOtsiInterfaceConfiguration(NEId, uuid)
-        .subscribe(
-            data => {
-                data["otsi-interface-configuration"]["total-power-warn-threshold-lower"] = totalPowerWarnThresholdLower;
-                  this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
-                     data,
-                     this.httpOptions
-                 ).subscribe(
-                    data => {
-                        console.log("PUT Request is successful ", data);
-                    },
-                    error => {
-                        console.log("Error", error);
-                    }
-                ); 
-            });
+            .toPromise()
+            .then(
+                data => {
+                    data["otsi-interface-configuration"]["laser-control"] = laserConfigValue;
+                    this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
+                        data,
+                        this.httpOptions
+                    ).subscribe(
+                        data => {
+                            console.log("PUT Request is successful ");
+                        },
+                        error => {
+                            console.log("Error", error);
+                        }
+                    );
+                });
     }
-    
-    public saveTotalPowerWarnThresholdUpper(NEId, uuid, totalPowerWarnThresholdUpper){
+
+    public saveTotalPowerWarnThresholdLower(NEId, uuid, totalPowerWarnThresholdLower) {
         return this.getOtsiInterfaceConfiguration(NEId, uuid)
-        .subscribe(
-            data => {
-                data["otsi-interface-configuration"]["total-power-warn-threshold-upper"] = totalPowerWarnThresholdUpper;
-                 this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
-                     data,
-                     this.httpOptions
-                 ).subscribe(
-                    data => {
-                        console.log("PUT Request is successful ", data);
-                    },
-                    error => {
-                        console.log("Error", error);
-                    }
-                ); 
-            });
+            .toPromise()
+            .then(
+                data => {
+                    data["otsi-interface-configuration"]["total-power-warn-threshold-lower"] = totalPowerWarnThresholdLower;
+                    this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
+                        data,
+                        this.httpOptions
+                    ).subscribe(
+                        data => {
+                            console.log("PUT Request is successful ");
+                        },
+                        error => {
+                            console.log("Error", error);
+                        }
+                    );
+                });
+    }
+
+    public saveTotalPowerWarnThresholdUpper(NEId, uuid, totalPowerWarnThresholdUpper) {
+        return this.getOtsiInterfaceConfiguration(NEId, uuid)
+            .toPromise()
+            .then(
+                data => {
+                    data["otsi-interface-configuration"]["total-power-warn-threshold-upper"] = totalPowerWarnThresholdUpper;
+                    this.http.put(`http://172.29.145.7:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/${NEId}/yang-ext:mount/photonic-media:otsi-interface-pac/${uuid}/otsi-interface-configuration`,
+                        data,
+                        this.httpOptions
+                    ).subscribe(
+                        data => {
+                            console.log("PUT Request is successful ");
+                        },
+                        error => {
+                            console.log("Error", error);
+                        }
+                    );
+                });
     }
 }
